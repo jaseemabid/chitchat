@@ -33,7 +33,7 @@ let callback _addr r w =
 
 (** Starts a TCP server, which listens on the specified port, invoking callback
   every time a client connects. *)
-let run () =
+let server () =
   let host_and_port =
     Tcp.Server.create ~on_handler_error:`Raise (Tcp.on_port 8765) callback
   in
@@ -41,5 +41,5 @@ let run () =
 
 (* Call [run], and then start the scheduler *)
 let () =
-  run ();
+  server ();
   never_returns (Scheduler.go ())
