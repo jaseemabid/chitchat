@@ -33,13 +33,37 @@ let callback _addr r w =
 
 (** Starts a TCP server, which listens on the specified port, invoking callback
   every time a client connects. *)
-let server () =
+let server port () =
+  print_endline "Starting up the server";
   let host_and_port =
-    Tcp.Server.create ~on_handler_error:`Raise (Tcp.on_port 8765) callback
+    Tcp.Server.create ~on_handler_error:`Raise (Tcp.on_port port) callback
   in
   ignore (host_and_port : (Socket.Address.Inet.t, int) Tcp.Server.t Deferred.t)
 
-(* Call [run], and then start the scheduler *)
+
+let client () =
+  print_endline "Starting up the client"
+
+(* Unable to use the stdlib variant due to some build issue *)
+let default x opt =
+  match opt with
+      | Some v -> v
+      | None -> x
+
+(* Command line argument handling *)
+let command =
+  Command.basic
+    ~summary:"Chit chat!"
+    ~readme:(fun () -> "Demo OCaml app")
+    Command.Spec.(empty
+                  +> flag "-s" no_arg ~doc:"Run as server"
+                  +> flag "-p" (optional int) ~doc:"Port to bind/connect server")
+    (fun s p () ->
+     match s with
+     | true -> server (default 8765 p) ()
+     | false -> client ())
+
+(* Call command and then start the scheduler *)
 let () =
-  server ();
+  Command.run command;
   never_returns (Scheduler.go ())
