@@ -7,9 +7,16 @@ let rec receiver buffer r w =
   >>= function
   | `Eof -> return ()
   | `Ok len ->
-     (* let _ = Writer.write w "OK\n" in *)
-     let _ = Writer.flushed w in
-     let _ = print_endline (" ✉ " ^ (String.sub buffer 0 len)) in
+     let typ = (String.sub buffer 0 3) in
+     let message = (String.sub buffer 4 (len - 4)) in
+     let _ = if (typ = "ACK") then
+               (* TODO: update a ● to ✓ rather than print the line again *)
+               print_endline (" ✓ " ^ message)
+             else
+               let _ = Writer.write w ("ACK " ^ message) in
+               let _ = Writer.flushed w in
+               print_endline (" ✉ " ^ message) in
+
      receiver buffer r w
 
 (* Wait for messages from the stdin, send via the pipe*)
@@ -19,7 +26,7 @@ let rec sender buffer peer =
   >>= function
   | `Eof -> return ()
   | `Ok len ->
-     let _ = Writer.write peer buffer ~len in
+     let _ = Writer.write peer ("MSG " ^ buffer) ~len:(len + 4) in
      let _ = Writer.flushed peer in
      sender buffer peer
 
