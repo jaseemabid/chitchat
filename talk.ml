@@ -33,13 +33,13 @@ let callback _addr r w =
 
 (** Starts a TCP server, which listens on the specified port, invoking callback
   every time a client connects. *)
-let server port () =
+let server port () : unit Deferred.t =
   print_endline "Starting up the server";
   let where_to_listen = (Tcp.on_port port) in
   ignore  (Tcp.Server.create ~on_handler_error:`Raise where_to_listen callback);
   never ()
 
-let client port () =
+let client port () : unit Deferred.t =
   print_endline "Starting up the client";
   let target = (Tcp.to_host_and_port "127.0.0.1" port) in
   ignore (Tcp.with_connection target callback);
@@ -61,6 +61,7 @@ let command =
                   +> flag "-p" (optional int) ~doc:"Port to bind/connect server")
     (fun s p () ->
      match s with
+     (* I dont completely understand the type error here *)
      | true -> let _ = server (default 8765 p) () in ()
      | false -> let _ = client (default 8765 p) () in ())
 
